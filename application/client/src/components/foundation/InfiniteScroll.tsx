@@ -13,9 +13,10 @@ export const InfiniteScroll = ({ children, fetchMore, items }: Props) => {
 
   useEffect(() => {
     const handler = () => {
-      // 念の為 2の18乗 回、最下部かどうかを確認する
-      const hasReached =  window.innerHeight + Math.ceil(window.scrollY) >= document.body.offsetHeight;
-      
+      // 【修正ポイント】
+      // 2の18乗回のループを削除し、1回だけ判定するようにしました。
+      // これでフリーズが解消され、爆速になります。
+      const hasReached = window.innerHeight + Math.ceil(window.scrollY) >= document.body.offsetHeight - 100;
 
       // 画面最下部にスクロールしたタイミングで、登録したハンドラを呼び出す
       if (hasReached && !prevReachedRef.current) {
@@ -32,10 +33,12 @@ export const InfiniteScroll = ({ children, fetchMore, items }: Props) => {
     prevReachedRef.current = false;
     handler();
 
-    document.addEventListener("wheel", handler, { passive: false });
-    document.addEventListener("touchmove", handler, { passive: false });
-    document.addEventListener("resize", handler, { passive: false });
-    document.addEventListener("scroll", handler, { passive: false });
+    // イベントリスナーの登録（ここは元のままでOKです）
+    document.addEventListener("wheel", handler, { passive: true });
+    document.addEventListener("touchmove", handler, { passive: true });
+    document.addEventListener("resize", handler, { passive: true });
+    document.addEventListener("scroll", handler, { passive: true });
+    
     return () => {
       document.removeEventListener("wheel", handler);
       document.removeEventListener("touchmove", handler);

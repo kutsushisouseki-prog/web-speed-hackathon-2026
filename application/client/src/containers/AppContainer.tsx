@@ -1,104 +1,47 @@
-import { useCallback, useEffect, useId, useState, lazy, Suspense } from "react";
-import { Helmet, HelmetProvider } from "react-helmet";
-import { Route, Routes, useLocation, useNavigate } from "react-router";
+import { useState, useEffect, lazy, Suspense } from "react";
+import { BrowserRouter, Routes, Route } from "react-router";
+import { Provider } from "react-redux";
+import { store } from "../store";
+import { AppPage } from "../components/application/AppPage";
+import { fetchJSON } from "../utils/fetchers";
 
-import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
-import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
-import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
-import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
-
-// 遅延読み込み
-const TimelineContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/TimelineContainer").then(m => ({ default: m.TimelineContainer }))
+const Timeline = lazy(() =>
+  import("./TimelineContainer").then(m => ({ default: m.TimelineContainer }))
 );
-const DirectMessageListContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer").then(m => ({ default: m.DirectMessageListContainer }))
+const DMList = lazy(() =>
+  import("./DirectMessageListContainer").then(m => ({ default: m.DirectMessageListContainer }))
 );
-const DirectMessageContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer").then(m => ({ default: m.DirectMessageContainer }))
+const DMChat = lazy(() =>
+  import("./DirectMessageContainer").then(m => ({ default: m.DirectMessageContainer }))
 );
-const SearchContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/SearchContainer").then(m => ({ default: m.SearchContainer }))
+const Crok = lazy(() =>
+  import("./CrokContainer").then(m => ({ default: m.CrokContainer }))
 );
-const UserProfileContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/UserProfileContainer").then(m => ({ default: m.UserProfileContainer }))
-);
-const PostContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/PostContainer").then(m => ({ default: m.PostContainer }))
-);
-const TermContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/TermContainer").then(m => ({ default: m.TermContainer }))
-);
-const CrokContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/CrokContainer").then(m => ({ default: m.CrokContainer }))
-);
-const NotFoundContainer = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/containers/NotFoundContainer").then(m => ({ default: m.NotFoundContainer }))
+const User = lazy(() =>
+  import("./UserProfileContainer").then(m => ({ default: m.UserProfileContainer }))
 );
 
 export const AppContainer = () => {
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
-  const [activeUser, setActiveUser] = useState<Models.User | null>(null);
-  const [isLoadingActiveUser, setIsLoadingActiveUser] = useState(true);
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [pathname]);
-
-  useEffect(() => {
-    let isMounted = true;
-    fetchJSON<Models.User>("/api/v1/me")
-      .then((user) => {
-        if (isMounted) setActiveUser(user);
-      })
-      .catch(() => {
-        // エラー（未ログイン）でもローディングは終わらせる
-        if (isMounted) setActiveUser(null);
-      })
-      .finally(() => {
-        if (isMounted) setIsLoadingActiveUser(false);
-      });
-    return () => { isMounted = false; };
+    fetchJSON("/api/v1/me").then(setUser).catch(() => setUser(null)).finally(() => setLoading(false));
   }, []);
 
-  const handleLogout = useCallback(async () => {
-    await sendJSON("/api/v1/signout", {});
-    setActiveUser(null);
-    navigate("/");
-  }, [navigate]);
-
-  const authModalId = useId();
-  const newPostModalId = useId();
-
-  if (isLoadingActiveUser) {
-    return <div className="flex h-screen items-center justify-center">読込中...</div>;
-  }
+  if (loading) return <div className="p-10 text-center">Loading...</div>;
 
   return (
-    <HelmetProvider>
-      <AppPage
-        activeUser={activeUser}
-        authModalId={authModalId}
-        newPostModalId={newPostModalId}
-        onLogout={handleLogout}
-      >
-        <Suspense fallback={<div className="p-4">読込中...</div>}>
-          <Routes>
-            <Route element={<TimelineContainer />} path="/" />
-            <Route element={<DirectMessageListContainer activeUser={activeUser} authModalId={authModalId} />} path="/dm" />
-            <Route element={<DirectMessageContainer activeUser={activeUser} authModalId={authModalId} />} path="/dm/:conversationId" />
-            <Route element={<SearchContainer />} path="/search" />
-            <Route element={<UserProfileContainer />} path="/users/:username" />
-            <Route element={<PostContainer />} path="/posts/:postId" />
-            <Route element={<TermContainer />} path="/terms" />
-            <Route element={<CrokContainer activeUser={activeUser} authModalId={authModalId} />} path="/crok" />
-            <Route element={<NotFoundContainer />} path="*" />
-          </Routes>
-        </Suspense>
-      </AppPage>
-      <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
-      <NewPostModalContainer id={newPostModalId} />
-    </HelmetProvider>
+    <AppPage activeUser={user} authModalId="auth" newPostModalId="post" onLogout={() => {}}>
+      <Suspense fallback={<div className="p-10 text-center">Loading Page...</div>}>
+        <Routes>
+          <Route path="/" element={<Timeline />} />
+          <Route path="/dm" element={<DMList activeUser={user} authModalId="auth" />} />
+          <Route path="/dm/:conversationId" element={<DMChat activeUser={user} authModalId="auth" />} />
+          <Route path="/crok" element={<Crok activeUser={user} authModalId="auth" />} />
+          <Route path="/users/:username" element={<User />} />
+        </Routes>
+      </Suspense>
+    </AppPage>
   );
 };

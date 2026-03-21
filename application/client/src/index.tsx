@@ -10,7 +10,7 @@ if (container) {
   createRoot(container).render(
     <Provider store={store}>
       <BrowserRouter>
-        <Suspense fallback={<div>起動中...</div>}>
+        <Suspense fallback={<div className="p-10 text-center">読み込み中...</div>}>
           <AppContainer />
         </Suspense>
       </BrowserRouter>

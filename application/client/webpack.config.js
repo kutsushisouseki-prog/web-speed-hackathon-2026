@@ -1,6 +1,5 @@
 /// <reference types="webpack-dev-server" />
 const path = require("path");
-
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
@@ -19,12 +18,7 @@ const config = {
     historyApiFallback: true,
     host: "0.0.0.0",
     port: 8080,
-    proxy: [
-      {
-        context: ["/api"],
-        target: "http://localhost:3000",
-      },
-    ],
+    proxy: [{ context: ["/api"], target: "http://localhost:3000" }],
     static: [PUBLIC_PATH, UPLOAD_PATH],
   },
   devtool: isProduction ? "source-map" : "inline-source-map",
@@ -40,11 +34,7 @@ const config = {
   mode: isProduction ? "production" : "development",
   module: {
     rules: [
-      {
-        exclude: /node_modules/,
-        test: /\.(jsx?|tsx?|mjs|cjs)$/,
-        use: [{ loader: "babel-loader" }],
-      },
+      { exclude: /node_modules/, test: /\.(jsx?|tsx?|mjs|cjs)$/, use: [{ loader: "babel-loader" }] },
       {
         test: /\.css$/i,
         use: [
@@ -53,17 +43,14 @@ const config = {
           { loader: "postcss-loader" },
         ],
       },
-      {
-        resourceQuery: /binary/,
-        type: "asset/bytes",
-      },
+      { resourceQuery: /binary/, type: "asset/bytes" },
     ],
   },
   output: {
     chunkFilename: "scripts/[name].[contenthash].js",
     filename: "scripts/[name].js",
     path: DIST_PATH,
-    publicPath: "/",
+    publicPath: "auto",
     clean: true,
   },
   plugins: [
@@ -76,9 +63,7 @@ const config = {
       COMMIT_HASH: process.env.SOURCE_VERSION || "",
       NODE_ENV: isProduction ? "production" : "development",
     }),
-    new MiniCssExtractPlugin({
-      filename: "styles/[name].css",
-    }),
+    new MiniCssExtractPlugin({ filename: "styles/[name].css" }),
     new CopyWebpackPlugin({
       patterns: [
         {
@@ -97,53 +82,14 @@ const config = {
     alias: {
       "bayesian-bm25$": path.resolve(__dirname, "node_modules", "bayesian-bm25/dist/index.js"),
       "kuromoji$": path.resolve(__dirname, "node_modules", "kuromoji/build/kuromoji.js"),
-      "@ffmpeg/ffmpeg$": path.resolve(
-        __dirname,
-        "node_modules",
-        "@ffmpeg/ffmpeg/dist/esm/index.js"
-      ),
-      "@ffmpeg/core$": path.resolve(
-        __dirname,
-        "node_modules",
-        "@ffmpeg/core/dist/umd/ffmpeg-core.js"
-      ),
-      "@ffmpeg/core/wasm$": path.resolve(
-        __dirname,
-        "node_modules",
-        "@ffmpeg/core/dist/umd/ffmpeg-core.wasm"
-      ),
-      "@imagemagick/magick-wasm/magick.wasm$": path.resolve(
-        __dirname,
-        "node_modules",
-        "@imagemagick/magick-wasm/dist/magick.wasm"
-      ),
     },
-    fallback: {
-      fs: false,
-      path: false,
-      url: false,
-    },
+    fallback: { fs: false, path: false, url: false },
   },
   optimization: {
     minimize: isProduction,
-    splitChunks: {
-      cacheGroups: {
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          name: "vendor",
-          chunks: "all",
-        },
-      },
-    },
+    splitChunks: { chunks: "all", name: "vendor" },
     usedExports: true,
   },
-  cache: true,
-  ignoreWarnings: [
-    {
-      module: /@ffmpeg/,
-      message: /Critical dependency: the request of a dependency is an expression/,
-    },
-  ],
 };
 
 module.exports = config;

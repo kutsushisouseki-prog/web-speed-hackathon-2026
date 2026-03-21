@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import { createTranslator } from "@web-speed-hackathon-2026/client/src/utils/create_translator";
 
-// 🔥 State → 名前変更して衝突回避
+// import { createTranslator } from "...";
+
 type TranslateState =
   | { type: "idle"; text: string }
   | { type: "loading" }
@@ -22,6 +22,11 @@ export const TranslatableText: React.FC<Props> = ({ text }) => {
 
     setState({ type: "loading" });
 
+    // 動的importに変更（超重要）
+    const { createTranslator } = await import(
+      "@web-speed-hackathon-2026/client/src/utils/create_translator"
+    );
+
     const translator = createTranslator();
     const translated = await translator.translate(text);
 
@@ -35,7 +40,11 @@ export const TranslatableText: React.FC<Props> = ({ text }) => {
   return (
     <div>
       <span>
-        {state.type === "translated" ? state.text : state.type === "idle" ? state.text : "Translating..."}
+        {state.type === "translated"
+          ? state.text
+          : state.type === "idle"
+          ? state.text
+          : "Translating..."}
       </span>
       <button onClick={handleTranslate}>Translate</button>
     </div>

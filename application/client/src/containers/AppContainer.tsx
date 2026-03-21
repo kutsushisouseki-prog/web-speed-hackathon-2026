@@ -1,9 +1,8 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { Routes, Route } from "react-router";
-import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
-import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+import { AppPage } from "../components/application/AppPage";
+import { fetchJSON } from "../utils/fetchers";
 
-// 各ページの遅延読み込み
 const Timeline = lazy(() =>
   import("./TimelineContainer").then(m => ({ default: m.TimelineContainer }))
 );
@@ -27,22 +26,21 @@ const Post = lazy(() =>
 );
 
 export const AppContainer = () => {
-  const [user, setUser] = useState<Models.User | null>(null);
+  const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 通信エラーを完全に無視して起動するようにする
-    fetchJSON<Models.User>("/api/v1/me")
+    fetchJSON("/api/v1/me")
       .then(setUser)
-      .catch(() => setUser(null)) // 401エラー等でもクラッシュさせない
+      .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="p-10 text-center">Loading Data...</div>;
+  if (loading) return <div className="p-10 text-center">読み込み中...</div>;
 
   return (
     <AppPage activeUser={user} authModalId="auth" newPostModalId="post" onLogout={() => {}}>
-      <Suspense fallback={<div className="p-10 text-center">Loading Component...</div>}>
+      <Suspense fallback={<div className="p-10 text-center">読み込み中...</div>}>
         <Routes>
           <Route path="/" element={<Timeline />} />
           <Route path="/dm" element={<DMList activeUser={user} authModalId="auth" />} />

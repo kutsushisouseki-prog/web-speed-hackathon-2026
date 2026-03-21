@@ -1,29 +1,19 @@
-import { Helmet } from "react-helmet";
-
-import { InfiniteScroll } from "@web-speed-hackathon-2026/client/src/components/foundation/InfiniteScroll";
+import { useEffect, useState } from "react";
 import { TimelinePage } from "@web-speed-hackathon-2026/client/src/components/timeline/TimelinePage";
-import { useInfiniteFetch } from "@web-speed-hackathon-2026/client/src/hooks/use_infinite_fetch";
+import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 export const TimelineContainer = () => {
-  const { data: posts, fetchMore, loading } = useInfiniteFetch<Models.Post>(
-    "/api/v1/posts"
-  );
+  const [posts, setPosts] = useState<Models.Post[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // 初回ロード中
-  if (loading && posts.length === 0) {
-    return (
-      <Helmet>
-        <title>読込中 - CaX</title>
-      </Helmet>
-    );
-  }
+  useEffect(() => {
+    fetchJSON<Models.Post[]>("/api/v1/posts")
+      .then(setPosts)
+      .catch((err) => console.error("Failed to fetch posts:", err))
+      .finally(() => setLoading(false));
+  }, []);
 
-  return (
-    <InfiniteScroll fetchMore={fetchMore} items={posts}>
-      <Helmet>
-        <title>タイムライン - CaX</title>
-      </Helmet>
-      <TimelinePage timeline={posts} />
-    </InfiniteScroll>
-  );
+  if (loading) return <div className="p-10 text-center">読み込み中...</div>;
+
+  return <TimelinePage posts={posts} />;
 };

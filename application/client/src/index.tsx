@@ -5,13 +5,21 @@ import { BrowserRouter } from "react-router";
 import { AppContainer } from "@web-speed-hackathon-2026/client/src/containers/AppContainer";
 import { store } from "@web-speed-hackathon-2026/client/src/store";
 
-const container = document.getElementById("app");
-if (container) {
-  createRoot(container).render(
-    <Provider store={store}>
-      <BrowserRouter>
-        <AppContainer />
-      </BrowserRouter>
-    </Provider>,
-  );
+const init = () => {
+  const container = document.getElementById("app");
+  if (container) {
+    createRoot(container).render(
+      <Provider store={store}>
+        <BrowserRouter>
+          <AppContainer />
+        </BrowserRouter>
+      </Provider>,
+    );
+  }
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", init);
+} else {
+  init();
 }

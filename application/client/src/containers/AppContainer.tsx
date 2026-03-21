@@ -20,26 +20,37 @@ const Crok = lazy(() =>
 const User = lazy(() =>
   import("./UserProfileContainer").then(m => ({ default: m.UserProfileContainer }))
 );
+const Search = lazy(() =>
+  import("./SearchContainer").then(m => ({ default: m.SearchContainer }))
+);
+const PostDetail = lazy(() =>
+  import("./PostContainer").then(m => ({ default: m.PostContainer }))
+);
 
 export const AppContainer = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<Models.User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchJSON("/api/v1/me").then(setUser).catch(() => setUser(null)).finally(() => setLoading(false));
+    fetchJSON<Models.User>("/api/v1/me")
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) return <div className="p-10 text-center">Loading...</div>;
 
   return (
     <AppPage activeUser={user} authModalId="auth" newPostModalId="post" onLogout={() => {}}>
-      <Suspense fallback={<div className="p-10 text-center">Loading Page...</div>}>
+      <Suspense fallback={<div className="p-10 text-center text-teal-700">Loading Page...</div>}>
         <Routes>
           <Route path="/" element={<Timeline />} />
           <Route path="/dm" element={<DMList activeUser={user} authModalId="auth" />} />
           <Route path="/dm/:conversationId" element={<DMChat activeUser={user} authModalId="auth" />} />
           <Route path="/crok" element={<Crok activeUser={user} authModalId="auth" />} />
+          <Route path="/search" element={<Search />} />
           <Route path="/users/:username" element={<User />} />
+          <Route path="/posts/:postId" element={<PostDetail />} />
         </Routes>
       </Suspense>
     </AppPage>
